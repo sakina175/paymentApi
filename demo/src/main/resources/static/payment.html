@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Stripe Test Payment</title>
+    <title>Stripe Payment</title>
     <script src="https://js.stripe.com/v3/"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #card-element { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { margin-top: 20px; padding: 10px 20px; }
-    </style>
 </head>
 <body>
-    <h2>Stripe Test Payment</h2>
+    <h2>Make a Payment</h2>
 
     <form id="payment-form">
-        <label>Card Details</label>
-        <div id="card-element"></div>
-        <button type="submit">Pay $15.00</button>
+        <label>Email:</label>
+        <input type="email" id="email" required><br><br>
+
+        <div id="card-element" style="border:1px solid #ccc; padding:10px;"></div><br>
+
+        <button type="submit">Pay $15</button>
     </form>
 
-    <div id="payment-result" style="margin-top: 20px;"></div>
+    <div id="payment-result" style="margin-top:20px;"></div>
 
     <script>
-        // Use your own test publishable key here
-        const stripe = Stripe("pk_test_51Rt5SzFp5wdQqOpgsr4VgsHHKULUKAZ8MYIhq4YVLLkRHhOmbnGCZ8AR2ochjYE6C4CWbh2jFQtjumVyPgcz7ESh00RDRAgRMC");
-
+        const stripe = Stripe("pk_test_51Rt5SzFp5wdQqOpgsr4VgsHHKULUKAZ8MYIhq4YVLLkRHhOmbnGCZ8AR2ochjYE6C4CWbh2jFQtjumVyPgcz7ESh00RDRAgRMC"); // Replace with your Stripe publishable key
         const elements = stripe.elements();
         const card = elements.create("card");
         card.mount("#card-element");
@@ -33,30 +29,57 @@
 
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
-            console.log('213');
-            
-            // 1. Call backend to create PaymentIntent
-            const res = await fetch("http://localhost:8080/api/payments/create-payment-intent", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: 15.00 }) // USD dollars
-            });
 
-            const data = await res.json();
-            console.log('response token',data);
-            
-            const clientSecret = data.clientSecret;
+            const email = document.getElementById("email").value;
+            if (!email) {
+                alert("Email is required");
+                return;
+            }
 
-            // 2. Confirm payment with card details
-            const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: { card }
-            });
+            try {
+                // 1️⃣ Get Customer details
+                const custRes = await fetch(`http://localhost:8080/api/customers/${encodeURIComponent(email)}`);
+                if (!custRes.ok) throw new Error("Customer fetch failed");
+                const customerData = await custRes.json();
 
-            // 3. Show result
-            if (error) {
-                resultDiv.innerHTML = `<p style="color:red;">❌ ${error.message}</p>`;
-            } else if (paymentIntent.status === "succeeded") {
-                resultDiv.innerHTML = `<p style="color:green;">✅ Payment successful!</p>`;
+                // 2️⃣ Create Payment Intent
+                const paymentRes = await fetch("http://localhost:8080/api/payments/create-payment-intent", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: 15.00,
+                        id: customerData.id,
+                        customerStripeId: customerData.stripeCustomerId
+                    })
+                });
+                if (!paymentRes.ok) throw new Error("Payment intent creation failed");
+                const paymentData = await paymentRes.json();
+
+                console.log("card payload",card);
+                
+                // 3️⃣ Confirm payment
+                const { paymentIntent, error } = await stripe.confirmCardPayment(paymentData.clientSecret, {
+                    payment_method: { card }
+                });
+                
+                const paymentStatus = await fetch("http://localhost:8080/api/payments/update-payment-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        status: paymentIntent?.status==undefined?error.code:paymentIntent.status,
+                        paymentIntent:paymentData.clientSecret,
+                    })
+                });
+                
+                if (error) {
+                    resultDiv.innerHTML = `<p style="color:red;">❌ ${error.message}</p>`;
+                } else if (paymentIntent.status === "succeeded") {
+                    resultDiv.innerHTML = `<p style="color:green;">✅ Payment ${paymentStatus.status} aganist Transaction ID ${paymentStatus.transactionId}!</p>`;
+                    
+                }
+            } catch (err) {
+                console.error(err);
+                resultDiv.innerHTML = `<p style="color:red;">❌ ${err.message}</p>`;
             }
         });
     </script>
