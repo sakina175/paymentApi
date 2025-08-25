@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -24,7 +25,7 @@ public class TransactionServices {
     private final TransactionRepositry transactionRepositry;
     private final CustomerRepositry customerRepositry;
     
-    @org.springframework.beans.factory.annotation.Value("${stripe.secret.key}")
+    @Value("${stripe.secret.key}")
     private String stripeSecretKey;
 
     @PostConstruct
