@@ -62,19 +62,20 @@
                     payment_method: { card }
                 });
                 
-                const paymentStatus = await fetch("http://localhost:8080/api/payments/update-payment-status", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        status: paymentIntent?.status==undefined?error.code:paymentIntent.status,
-                        paymentIntent:paymentData.clientSecret,
-                    })
-                });
+                // const paymentStatus = await fetch("http://localhost:8080/api/payments/update-payment-status", {
+                //     method: "POST",
+                //     headers: { "Content-Type": "application/json" },
+                //     body: JSON.stringify({
+                //         status: paymentIntent?.status==undefined?error.code:paymentIntent.status,
+                //         paymentIntent:paymentData.clientSecret,
+                //     })
+                // });
                 
                 if (error) {
                     resultDiv.innerHTML = `<p style="color:red;">❌ ${error.message}</p>`;
                 } else if (paymentIntent.status === "succeeded") {
-                    resultDiv.innerHTML = `<p style="color:green;">✅ Payment ${paymentStatus.status} aganist Transaction ID ${paymentStatus.transactionId}!</p>`;
+                    resultDiv.innerHTML = `<p style="color:green;">✅ Payment success :)</p>`;
+                    // resultDiv.innerHTML = `<p style="color:green;">✅ Payment ${paymentStatus.status} aganist Transaction ID ${paymentStatus.transactionId}!</p>`;
                     
                 }
             } catch (err) {

@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paymentapi.service.StripeWebhookServices;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/webhook")
+@RequestMapping("/webhook")
+@RequiredArgsConstructor
 public class StripeWebhookController {
-    StripeWebhookServices stripeWebhookServices;
+    private final StripeWebhookServices stripeWebhookServices;
 
     @PostMapping("/stripe")
     public String handleStripeEvent(HttpServletRequest request, @RequestBody String payload,
