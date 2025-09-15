@@ -52,7 +52,7 @@ public class TransactionServices {
         Transactions newTransaction= new Transactions();
         newTransaction.setAmount(BigDecimal.valueOf(amountInDouble));
         newTransaction.setCurrency(params.get("currency").toString());
-        newTransaction.setStripePaymentIntentId(intent.getClientSecret().toString());
+        newTransaction.setStripePaymentIntentId(intent.getId());
         newTransaction.setStatus(intent.getStatus().toUpperCase());
         newTransaction.setCustomer(customers);
         newTransaction.setFailureReason(intent.getCancellationReason());
