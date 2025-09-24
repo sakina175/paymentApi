@@ -39,7 +39,6 @@ public class StripeWebhookServices {
         Event event;
 
         try {
-            // verify sign
             event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
         } catch (Exception e) {
             System.out.println("signature error:" + e);
